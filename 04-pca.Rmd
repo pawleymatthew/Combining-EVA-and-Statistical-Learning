@@ -1,0 +1,287 @@
+# Principal component analysis {#pca}
+\chaptermark{Principal component analysis}
+\minitoc
+
+\noindent
+
+## Motivation {#pca-motivation}
+
+Describing extremal dependence in high dimensions is a challenging problem. Dependence in the tail of an $M$ dimensional random vector is characterised by the $(M-1)$-dimensional angular measure $H$ (Section \@ref(multivariate-asymptotic-theory)). Estimating such a high-dimensional measure is challenging, especially since there are only a limited number of extreme observations at our disposal. 
+
+In a general multivariate analysis, principal component analysis (PCA) offers a way to reduce the dimensionality of a problem: since certain linear combinations of the variables tend to be more likely than others, the data can be projected onto a lower-dimensional subspace while incurring minimal information loss. Dimensionality reduction improves the tractability of the problem and refines the statistical analysis. PCA achieves this by an eigendecomposition of the data covariance matrix, which contains information about the linear dependencies between the variables.
+
+The goal is to apply an analogous approach to the problem of estimating the high-dimensional angular measure. The support of the angular measure is likely to be concentrated in a lower-dimensional space, since some combinations of extremes will tend to be more likely than others. For example, asymptotic independence between variables will induce sparsity in $H$. Therefore there is scope to summarise the extremal dependence information in fewer dimensions. The approach of standard PCA will serve as inspiration for how this can be done.
+
+This chapter will focus on the method of @cooleyDecompositionsDependenceHighdimensional2019, described in Section \@ref(pca-tpdm), which develops an extremal dependence analogue of the covariance matrix. This method will be applied to the French rainfall data in Section \@ref(pca-fr-data). Finally, there is a brief discussion of other methods in Section \@ref(pca-discussion).
+
+## The tail pairwise dependence matrix {#pca-tpdm}
+
+In standard PCA, the principal components are typically computed by an eigendecomposition of the data's covariance matrix. In particular, the eigenvectors of the covariance matrix are the principal components, and the eigenvalues relate to the data variability captured by each principal component. A lower dimensional representation of the data is obtained by projecting the data on the leading principal components. @cooleyDecompositionsDependenceHighdimensional2019 develop an analogue of the covariance matrix for extremal dependence: the tail pairwise dependence matrix (TPDM). Inspired by standard PCA, our aim is to understand the relationships between variables using the ordered basis induced by the eigendecomposition of the TPDM.
+
+Assume that a random vector $X\in[0,\infty)^M$ is regularly varying with tail index $\alpha>0$. By performing a suitable marginal transformation, we may assume that $\alpha=2$ without loss of generality [@resnickHeavytailPhenomenaProbabilistic2007]. This means that
+\begin{equation*}
+n\Prob{\frac{X}{\sqrt{n}}\in\cdot} \to \nu_X(\cdot),\qquad \nu_X(\dee r\times \dee w) = 2r^{-3} \dee H_X(w),
+\end{equation*}
+where
+\begin{equation*}
+r = \sqrt{X_1^2+\ldots+X_M^2}=\norm{X}_2,\qquad w = X/r
+\end{equation*}
+are the 'radius' and 'angle' of $X$ respectively, and $H_X$ is the angular measure on $\Theta_{M-1}^+$, the $L_2$ unit ball in $[0,\infty)^M$ (Section \@ref(multivariate-asymptotic-theory)). The TPDM is defined as the $M\times M$ matrix $\Sigma_X = (\sigma_{X_{ij}})$ whose entries are the pairwise extremal dependence measure
+\begin{equation}
+\sigma_{X_{ij}} = \int_{\Theta_{M-1}^+} w_i w_j \,\dee H_X(w).
+(\#eq:tpdm)
+\end{equation}
+The $\sigma_{X_{ij}}$ are measures of pairwise extremal dependence [@larssonExtremalDependenceMeasure2012]. If $H_X$ is concentrated on $(w_i,w_j)\in\{(1,0),(0,1)\}$, then $\sigma_{X_{ij}}=0$ and $X_i,X_j$ possess asymptotic independence. On the other hand, if $H_X$ concentrates on $\{w:w_i=w_j\}$, then $\sigma_{X_{ij}}$ is maximal and $X_i,X_j$ have complete asymptotic dependence. Since the TPDM comprises bivariate tail dependencies, it should be interpreted as a summary measure that contains incomplete information about the overall tail dependence of $X$. 
+
+Similar to the covariance matrix, it can be shown that $\Sigma_X$ is positive semidefinite and its diagonal elements relate to the scale of $X$, in the sense that
+\begin{equation*}
+\lim_{n\to\infty} n\Prob{\frac{X_i}{\sqrt{n}}>x} = \frac{\sigma_{X_{ii}}}{x^2}, \qquad 
+\sum_{i=1}^M \sigma_{X_{ii}} = \int_{\Theta_{M-1}^+} \,\dee H_X(w).
+\end{equation*}
+Since $\Sigma_X$ is positive semidefinite, it admits an eigendecomposition $\Sigma_X = UDU^T$, where $D$ is a diagonal matrix of eigenvalues $\lambda_1\geq\ldots\geq\lambda_M\geq 0$ and $U = (u_1,\ldots,u_M)\in\R^{M\times M}$ is an orthogonal matrix, whose columns form an orthonormal basis for $\R^M$. Moreover, under some mild assumptions on the lower tail of $X$, it can be shown that
+\begin{equation*}
+\{e_1,\ldots,e_M\} = \{t(u_1), \ldots, t(u_M) \}
+\end{equation*}
+is an orthonormal basis for $[0,\infty)^M$, where $t:\R\to(0,\infty)$ is the softplus function
+\begin{equation*}
+t(z)=\log(1+\exp(z))
+\end{equation*}
+applied elementwise. The softplus transformation maps the data to the positive orthant without disturbing the observations in the tail, since $t(z)\approx z$ for large $z$. The extremal principal components are defined as
+\begin{equation*}
+V = U^T t^{-1}(X).
+\end{equation*}
+It can be shown that the elements of $V$ are precisely the stochastic basis coefficients of $X$ decomposed into the basis vectors $e_1,\ldots,e_M$.
+
+In standard PCA the principal components are orthogonal and each eigenvalue relates to the amount of variability accounted for by its corresponding principal component. The extremal principal components possess analogous properties. Define
+\begin{equation*}
+\sigma_{V_{ij}} = \int_{\Theta_{M-1}} \omega_i \omega_j \,\dee H_V(\omega),
+\end{equation*}
+where $H_V$ is the angular measure of $V$ and $\Theta_{M-1}$ is the $L_2$ unit ball in $\R^M$. Then
+\begin{equation*}
+\sigma_{V_{ij}} = 
+\begin{cases}
+\lambda_i, & i=j \\
+0, & i\neq j.
+\end{cases}
+\end{equation*}
+The eigenvalues relate to the scale of the elements of $V$ in an analogous way to how the $\sigma_{X_{ii}}$ related to the scale of the elements of $X$. However, the interpretation of $\sigma_{V_{ij}}$ differs slightly from that of $\sigma_{X_{ij}}$, e.g. $\sigma_{V_{ij}}=0$ does not mean that $V_i$ and $V_j$ are asymptotically independent. 
+To apply the method, we now consider how $\Sigma_X$ can be estimated from data. Let $x_1,\ldots,x_M$ be iid observations of $X$. Let $r_t = \norm{x_t}_2$ and $w_t=x_t/r_t$. The estimator for $\Sigma_X$ is given by
+\begin{equation*}
+\hat{\sigma}_{X_{ij}} = \frac{\hat{m}}{n_u} \sum_{t=1}^M w_{ti}w_{tj} \mathbbm{1}(r_t>r^\star)
+\end{equation*}
+where $r^\star$ is a high radial threshold, $n_u=\sum_{t=1}^M \mathbbm{1}(r_t>r^\star)$ is the number of observations that exceed the threshold, and $\hat{m}$ is an estimate of $H_X(\Theta_{M-1}^+)$. If the marginals are standard Fréchet with $\Prob{X_{ti}\leq x}=\exp(-x^{-2})$, then $m=M$. Therefore the need to estimate $m$ can be avoided by performing a suitable transformation of the marginals in pre-processing. Rescaling the data in this way is analogous to performing standard PCA on the correlation matrix instead of the covariance matrix.
+
+The sample principal components are found by $\hat{v}_t=\hat{U}t^{-1}(x_t)$, where $\hat{\Sigma}_X=\hat{U}\hat{D}\hat{U}^T$ is the eigendecomposition of the estimated TPDM. A partial basis reconstruction of $x_t$ is obtained by taking a truncated linear combination of the leading extremal basis vectors. 
+
+## Application to the French rainfall data {#pca-fr-data}
+
+```{r pca-preprocess, include=FALSE}
+prepPCA <- function(x){
+  N <- ncol(x) # number of sites
+  M <- nrow(x) # number of measurements
+  # compute empirical CDFs
+  Femp = apply(x, 2, rank) / (M+1)
+  # transform to Frechet marginals (mu=0, sigma=0, xi=2)
+  frechet2 <- function(z) (-log(z))^(-1/2)
+  xPrep <- apply(Femp, 2, frechet2)
+  return(xPrep)
+}
+```
+
+```{r pca-estimate-Sigma, include=FALSE}
+estimateSigma <- function(x, u) {
+  N <- ncol(x) # number of sites
+  M <- nrow(x) # number of measurements
+  Sigma <- matrix(NaN, N, N)
+  for (i in 1:N) {
+    for (j in 1:N) {
+      rij <- sqrt(x[,i]^2 + x[,j]^2)
+      wi <- x[,i]/rij
+      wj <- x[,j]/rij
+      qij <- quantile(rij, u, na.rm=TRUE)
+      id <- which(rij>qij)
+      Sigma[i,j] <- 2 * sum(wi[id] * wj[id], na.rm = TRUE) / length(id)
+    }
+  }
+  return(Sigma)
+}
+```
+
+```{r pca-get-pcs, include=FALSE}
+trans <- function(x){
+  y <- log(1+exp(x))
+  y[is.infinite(y)] <- x[is.infinite(y)]
+  return(y)
+}
+
+transinv <- function(x){
+  y <- log(exp(x)-1)
+  y[is.infinite(y) && x>1] <- x[is.infinite(y) && x>1]
+  return(y)
+}
+
+extremePCA <- function(Sigma, x) {
+  N <- ncol(x) # number of sites
+  M <- nrow(x) # number of measurements
+  eigenSigma <- eigen(Sigma)
+  
+  # if Sigma is not pos def, replace with closest pos def matrix
+  if (min(eigenSigma$values)<0){
+    #print("Sigma is not positive definite.")
+    Sigma <- nearPD(Sigma)[[1]]
+    eigenSigma <- eigen(Sigma)
+  }
+  
+  U <- eigenSigma$vectors
+  if (U[1,1]<0) U <- -U
+
+  tU <- trans(U)
+  tinvx <- transinv(x) 
+  
+  V <- matrix(NaN, nrow = M, ncol = N)
+  for (i in 1:M){
+    V[i,] <- tU %*% tinvx[i,]
+  }
+  return(list("U"=U, "V"=V, "extU"=tU, "evals"=eigenSigma$values))
+}
+```
+
+```{r pca-recon, include=FALSE}
+truncatedRecon <- function(U, V, dims, t){
+  recon <- U[,1:dims] %*% V[t,1:dims]
+  recon <- trans(recon)
+  return(recon)
+}
+```
+
+```{r echo=FALSE}
+frxPrep <- prepPCA(frx)
+Sigma <- estimateSigma(frxPrep, u=0.85)
+frPCA <- extremePCA(Sigma, frxPrep)
+```
+
+We now apply the method to French rainfall dataset. Based on Figure \@ref(fig:fr-data) and the fact that the data are weekly maxima of hourly precipitation, it is assumed that stationarity holds; no declustering was performed in pre-processing. The TPDM estimation procedure used in this example is a modified version of the approach outlined in the previous section. Now the estimate of $\hat{\sigma}_{X_{ij}}$ is based on large values of $r_{tij}=\sqrt{x_{ti}^2+x_{tj}^2}$. This adaptation is used by @jiangPrincipalComponentAnalysis2020 and leads to more observations being used. The thresholds $r_{ij}^\star$ were selected in correspondence to the empirical 0.85 quantile. 
+
+Figure \@ref(fig:pca-fr-sigma) shows a scree plot of the eigenvalues of the estimate TPDM on a log scale (left) and a graphical representation of its elements (right). Due to pre-processing, the sum of the eigenvalues is $\sum_{i=1}^{92} \lambda_i = 92$. The first few eigenvalues are `r round(frPCA$evals[1], digits=1)`, `r round(frPCA$evals[2], digits=1)` and `r round(frPCA$evals[3], digits=1)`. After this the eigenvalues decrease to zero at a fairly gradual rate, which suggests that a low-dimensional reconstruction is unlikely to capture the full range of spatial behaviours. The right-hand plot allows the structure of $\hat{\Sigma}_X$ to be visualised. The colour of each pixel in the grid corresponds to the pairwise tail dependence between two stations. The diagonal elements are all equal to one due to the scaling that was performed in pre-processing. The symmetry $\hat{\Sigma}_X$ is an obvious consequence of \@ref(eq:tpdm). However, it is difficult to discern any meaningful patterns in $\hat{\Sigma}_X$ based on this plot because the ordering of the stations is arbitrary. 
+
+```{r pca-fr-sigma, echo=FALSE, fig.cap="Scree plot of the first 40 eigenvalues of $\\hat{\\Sigma}_X$ on a log scale (left); the elements of the estimated TPDM (right).", fig.scap="Scree plot of the first 40 eigenvalues of $\\hat{\\Sigma}_X$ and the elements of $\\hat{\\Sigma}_X$.", fig.show="hold", out.width="50%", fig.align='center'}
+plot(1:40, frPCA$evals[1:40], pch=20, cex=1, xlab="Index", ylab="Eigenvalue", log="y", mgp=c(2,1,0))
+levelplot(Sigma, cuts=8, col.regions=brewer.pal(9, "Reds"),
+          xlab="Station i", ylab = "Station j",
+          scales=list(x=list(cex=1),y=list(cex=0.8)), 
+          colorkey = list(labels=list(cex=0.8)))
+```
+
+Patterns in the TPDM can be better understood by plotting its entries against the geographical distance between the corresponding stations (Figure \@ref(fig:pca-fr-sigma-dist)). We observe that the $\hat{\sigma}_{X_{ij}}$ are a decreasing function of the distance between stations $i$ and $j$. This conclusion is unsurprising: the TPDM measures pairwise extremal dependence, which tends to be stronger for stations in close proximity. This is consistent with the findings of the cluster analysis in Chapter \@ref(clustering) - the left-most plot in Figure \@ref(fig:pam-fr-rain) showed a clear link between extremal dependence (as measured by F-madogram distance) and geographical proximity - and can be explained by the fact that nearby stations are likely to be subject to similar climatological conditions.
+
+```{r pca-fr-sigma-dist, echo=FALSE, fig.align='center', fig.cap="Relationship between the pairwise extremal dependence $\\hat{\\sigma}_{X_{ij}}$ and the physical (Haversine) distance between weather stations $i$ and $j$.", fig.scap="Relationship between $\\hat{\\sigma}_{X_{ij}}$ and geographical distances.", message=FALSE, warning=FALSE, out.width="80%"}
+M <- nrow(Sigma)
+D <- geodist(x = cbind(as.numeric(frLong), as.numeric(frLat)), measure = "haversine")
+d_vals <- c()
+s_vals <- c()
+for (i in 1:M){
+  for (j in 1:M){
+    d_vals <- c(d_vals, D[i,j])
+    s_vals <- c(s_vals, Sigma[i,j])
+  }
+}
+plot(d_vals/1000, s_vals, pch=20, cex=1, xlab="Distance (km)", ylab="Pairwise extremal dependence")
+```
+
+Figure \@ref(fig:pca-fr-leading-evecs) shows the four leading eigenvectors $U_1,\ldots,U_4$. Each eigenvector captures some large-scale spatial behaviour in the data. The first eigenvector has values ranging between `r round(range(frPCA$U[,1])[1], digits=3)` and `r round(range(frPCA$U[,1])[2], digits=3)`. This shows that the leading eigenvector accounts for the rainfall magnitudes rather than spatial behaviours. The subsequent eigenvectors show large-scale spatial patterns of increasing resolution. The second eigenvector increases linearly from north to south. This agrees with basic climatological knowledge: in the autumn season rainfall intensities are high along the Mediterranean coast and milder in the north [@bernardClusteringMaximaSpatial2013]. The third eigenvector appears to provide information about differences between coastal and inland regions. The fourth eigenvector exhibits non-linear behaviour, with large values in the north-east and south-west regions and lower values elsewhere. 
+
+```{r pca-fr-leading-evecs, echo=FALSE, fig.cap="The four leading eigenvectors, $U_1,\\ldots,U_4$ of $\\hat{\\Sigma}_X$.", fig.scap="The four leading eigenvectors, $U_1,\\ldots,U_4$ of $\\hat{\\Sigma}_X$.", out.width="100%"}
+par(mfrow=c(2,2))
+col_loc <- c( brewer.pal(6,"Blues")[6:2], brewer.pal(6,"Reds")[2:6])
+
+for (i in 1:4){
+  Ui = frPCA$U[,i]
+  z <- max(abs(frPCA$U[,i]))
+  temp <- seq(-z-0.0001, z+0.00001, length.out=11)
+  # prepare map
+  neighbors <- c("France","Spain","Germany","Belgium","Italy","Switzerland","Luxembourg","Netherland","Monaco","Andorra")
+  bgOcean <- "white"
+  bgFrance <- "grey85"
+  map("worldHires", neighbors, col = "grey95", fill = T, bg = bgOcean, xlim = c(-5.0,9.5), ylim = c(41.5,51), mar=c(1,3.35,1,3.35))
+  map("worldHires", "France", col = bgFrance, fill = T, add = T)
+  map.axes(xaxt='n', yaxt='n', ann=FALSE)
+  grid()
+  for (k in 1:92){
+    temp_k <- sum(frPCA$U[k,i] > temp )
+    points(frLong[k], frLat[k], pch=20, cex=0.8, col=col_loc[temp_k])
+  }
+  colkey(side = 4, col=col_loc, clim = c(min(temp), max(temp)), labels=F, breaks=round(temp,2), add=T, cex.axis=0.8, dist=-0.01)
+}
+```
+
+By projecting the data onto a lower-dimensional subspace spanned by the extremal principal components, we can obtain a lower-dimensional reconstruction of an event. Figure \@ref(fig:pca-fr-recon) shows compares such a reconstruction based on the leading 15 basis functions against the (pre-processed) observed truth for the month corresponding to the largest recorded $r_t$ value. Since $\sum_{i=1}^{15}\lambda_i\approx 69.7$, the selected components account for approximately $76\%$ of the overall information. 
+
+```{r pca-fr-recon, echo=FALSE, fig.cap="The transformed observations from the largest event, comparing a partial basis reconstruction (using the leading 15 basis functions) against the true data.", fig.scap="Partial basis reconstruction of the largest event.", out.width="100%"}
+frxactual <- frx[217,] # actual
+frxrecon <- truncatedRecon(frPCA$U, frPCA$V, dims=15, t=217) # reconstruction
+frxdiff <- frxactual - frxrecon
+
+par(mfrow=c(1,3))
+
+for (i in 1:3){
+  # prepare map
+  neighbors <- c("France","Spain","Germany","Belgium","Italy","Switzerland","Luxembourg","Netherland","Monaco","Andorra")
+  bgOcean <- "white"
+  bgFrance <- "grey85"
+  map("worldHires", neighbors, col = "grey95", fill = T, bg = bgOcean, xlim = c(-5.0,9.5), ylim = c(41.5,51), mar=c(1,3.35,1,3.35))
+  map("worldHires", "France", col = bgFrance, fill = T, add = T)
+  map.axes(xaxt='n', yaxt='n', ann=FALSE)
+  grid()
+  
+  if (i==1){
+    col_loc <- brewer.pal(9,"Blues")
+    z <- max(abs(frxactual))
+    temp <- seq(0, z+0.00001, length.out=10)
+    for (k in 1:92){
+      temp_k <- sum(frxactual[k] > temp )
+      points(frLong[k], frLat[k], pch=20, cex=0.8, col=col_loc[temp_k])
+    }
+    title(main = "Observed")
+    colkey(side = 4, col=col_loc, clim = c(min(temp), max(temp)), labels=F, breaks=round(temp,1), add=T, cex.axis=0.8, dist=-0.01)
+  }
+  if (i==2){
+    col_loc <- brewer.pal(9,"Blues")
+    z <- max(abs(frxrecon))
+    temp <- seq(0, z+0.00001, length.out=10)
+    for (k in 1:92){
+      temp_k <- sum(frxrecon[k] > temp )
+      points(frLong[k], frLat[k], pch=20, cex=0.8, col=col_loc[temp_k])
+    }
+    title(main = "Partial basis reconstruction")
+    colkey(side = 4, col=col_loc, clim = c(min(temp), max(temp)), labels=F, breaks=round(temp,1), add=T, cex.axis=0.8, dist=-0.01)
+  }
+  if (i==3){
+    col_loc <- c( brewer.pal(6,"Blues")[6:2], brewer.pal(6,"Reds")[2:6])
+    z <- max(abs(frxdiff))
+    temp <- seq(-z-0.0001, z+0.00001, length.out=11)
+    for (k in 1:92){
+      temp_k <- sum(frxdiff[k] > temp )
+      points(frLong[k], frLat[k], pch=20, cex=0.8, col=col_loc[temp_k])
+    }
+    title(main = "Difference")
+    colkey(side = 4, col=col_loc, clim = c(min(temp), max(temp)), labels=F, breaks=round(temp,1), add=T, cex.axis=0.8, dist=-0.01)
+  }
+}
+```
+
+
+## Discussion {#pca-discussion}
+
+Other approaches to PCA for multivariate extremes have been developed. @dreesPrincipalComponentAnalysis2021 consider PCA projections of the rescaled vectors $\Theta=X/\norm{X}$ onto the set of low-dimensional linear subspaces $V$, and find the optimal subspace by minimising the conditional risk
+\begin{equation*}
+R_t(V) = \mathbb{E}_t\left[\norm{\Pi^\perp _V \Theta}^2\right]
+\end{equation*}
+given $\norm{X}>t$ for some high threshold $t>0$, where $\Pi^\perp_V\Theta$ denotes the orthogonal projection of $\Theta$ onto the orthogonal complement $V^\perp$ of $V$. The risk measures the reconstruction error in reverting to a lower dimensional space. In practice the optimal subspace is estimated is performed using a statistical learning approach by minimising the empirical risk
+\begin{equation*}
+\hat{R}_t(V) = \frac{\sum_i \norm{\Pi^\perp _V \Theta_i}^2\mathbbm{1}(\norm{X_i}>t)}{\sum_i \mathbbm{1}(\norm{X_i}>t)}
+\end{equation*}
+In this work we apply Principal Component Analysis (PCA) to a re-scaled version of radially thresholded observations. Within the statistical learning framework of empirical risk minimiza- tion, our main focus is to analyze the squared reconstruction error for the exceedances over large radial thresholds.
+
+
+\todo{Describe the two other papers.} \lipsum[1-3]
+

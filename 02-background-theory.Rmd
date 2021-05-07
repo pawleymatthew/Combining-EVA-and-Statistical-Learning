@@ -1,0 +1,224 @@
+# Extreme value theory {#extreme-value-theory}
+\chaptermark{Background theory}
+\minitoc
+
+This chapter covers the key background theory for multivariate extremes. Section \@ref(univariate-extremes) introduces key ideas from univariate extreme value theory, including the basic asymptotic theory and the block maxima and threshold excess approaches for modelling extreme events. Section \@ref(multivariate-extremes) extends these notions to the multivariate setting and introduces the notion of extremal dependence. For further details the reader is referred to @colesIntroductionStatisticalModeling2001, upon which this chapter is heavily based.
+
+## Univariate extremes {#univariate-extremes}
+
+### Asymptotic theory {#univariate-asymptotic-theory}
+
+Let $X_1,X_2,\ldots\simiid F$ and define for $n\in\N$ the random variable
+\begin{equation*}
+M_n = \max(X_1,\ldots,X_n).
+\end{equation*}
+The distribution of $M_n$ is given by
+\begin{equation*}
+\Prob{M_n\leq z} =[F(z)]^n,
+\end{equation*}
+but this result is not particularly helpful in practice, because $F$ is generally unknown. Instead we look for approximate families of models for $F^n$. If there exist real sequences of constants $a_n>0$ and $b_n\in\R$ such that 
+\begin{equation*}
+\Prob{\frac{M_n-b_n}{a_n}\leq z} \to G(z),\quad n\to\infty,
+\end{equation*}
+for some non-degenerate distribution $G$, then $G$ belongs to the generalised extreme value (GEV) family of distributions. The GEV distribution has three parameters: a location parameter $\mu\in\R$, a scale parameter $\sigma>0$, and a shape parameter $\xi\in\R$. Its distribution function is given by
+\begin{equation}
+G(z) = 
+\begin{cases}
+\exp\left\lbrace -\left[1+\xi\left(\frac{z-\mu}{\sigma}\right)\right]_{+}^{-1/\xi}\right\rbrace, & \xi\neq 0 \\
+\exp\left\lbrace -\exp\left(\frac{z-\mu}{\sigma}\right)\right\rbrace, & \xi=0 \\
+\end{cases}
+(\#eq:gev-distribution)
+\end{equation}
+The GEV family encompasses three sub-families of distributions. The sub-families are determined by the shape parameter $\xi$, which also governs the tail behaviour: $\xi=0$ corresponds to the Gumbel distribution, which has an exponential tail, $\xi>0$ to the heavy-tailed Fréchet distribution, and $\xi<0$ to the negative Weibull distribution, which has a finite upper limit. 
+
+The shape parameter $\xi$ determines the sub-family and governs the tail behaviour. The sub-families are: Gumbel ($\xi=0$, exponential upper tail), Fréchet ($\xi>0$, heavy upper tail) and negative Weibull ($\xi<0$, finite upper limit). The GEV distribution uniquely satisfies the max-stability property, i.e. the maximum of a series of iid random variables has the same distribution as the individual samples (up to a location-scale transform).
+
+### Block maxima approach {#block-maxima-approach}
+
+The GEV distribution is the basis of the block maxima approach to modelling extreme events. Given a series of independent observations, the data is divided into blocks of finite size. From the asymptotic theory outlined above, we know that the block maxima will be approximately GEV distributed, provided the block size is sufficiently large. If the block size is too small, then the approximation will be invalid. On the other hand, increasing the block size necessarily reduces the number of block maxima, leading to a higher variance in the GEV parameter estimates. Figure \@ref(fig:block-max-threshold-excess-fr-data) (top) shows the block maxima for the Château-Gaillard weather station in the France rainfall dataset. In this instance there are 19 blocks, each of size 12. With this choice of block size, each block represents one single autumn season. A drawback of the block maxima approach is that it is wasteful: only the observations corresponding to block maxima are used, and all other extremal observations are discarded. For example, the third and seventh blocks of the Château-Gaillard time series contain multiple extreme observations, each of which should be informative for the tail of the distribution, but only one will be carried forward to fit the model. This motivates an alternative approach based on threshold exceedances.
+
+```{r block-max-threshold-excess-fr-data, echo=FALSE, fig.align='center', fig.cap='The Château-Gaillard time series with block maxima (top) and threshold exceedances (bottom) highlighted in red. The block size is $n=19$ and the threshold is taken to be $u=10$.', fig.scap='Block maxima and threshold exceedances of the Château-Gaillard time series.', out.width="100%"}
+
+# time series of Château-Gaillard
+y <- as.numeric(frx[,1])
+tmax <- length(y)
+
+par(mfrow=c(2,1), mar=c(3, 3, 1, 0.5))
+
+# plot block maxima
+plot(1:tmax, y, pch = 20, cex = 0.8, col="grey", xlab = "Index", ylab = "Maximum hourly precipitation (mm)", cex.lab = 0.7, cex.axis = 0.7, mgp=c(1.5,0.5,0))
+m <- 19 # number of blocks
+n <- tmax / m # size of each block
+abline(v = 0, col="black", lwd=1.5, lty=3)
+
+for (block in 1:m){
+  lower <- (block-1) * n + 1
+  upper <- block * n
+  obs <- y[lower:upper]
+  block_max <- lower + which.max(obs) - 1
+  points(block_max, y[block_max], pch = 20, cex = 0.8, col="red")
+  abline(v = upper, col="black", lwd=1.5, lty=3)
+}
+
+# plot threshold exceedances
+plot(1:tmax, y, pch = 20, cex = 0.8, col="grey", xlab = "Index", ylab = "Maximum hourly precipitation (mm)", cex.lab = 0.7, cex.axis = 0.7, mgp=c(1.5,0.5,0))
+u <- 10 # threshold
+exceed <- which(y>u) # points which exceed threshold
+points(exceed, y[exceed], pch = 20, cex = 0.8, col="red")
+abline(h = u, col="black", lwd=1.5, lty=3)
+```
+
+
+### Threshold excess approach {#threshold-excess-approach}
+
+The threshold excess approach is illustrated in the bottom panel of Figure \@ref(fig:block-max-threshold-excess-fr-data). This method is more efficient because it makes use of all observations that exceed a specified high threshold $u$.
+
+Consider again $X_1,X_2,\ldots\simiid F$. The behaviour of extreme events is characterised by the conditional probability
+\begin{equation}
+\Prob{X_i-u>y \mid X_i>u} = \frac{1-F(u+y)}{1-F(u)},\quad y>0.
+(\#eq:conditional-probability-exceed)
+\end{equation}
+This result is not only useful in applications because $F$ is unknown. Instead, we seek approximations to the left-hand side of \@ref(eq:conditional-probability-exceed) that are applicable provided the threshold $u$ is sufficiently high. Define
+\begin{equation*}
+M_n = \max(X_1,\ldots,X_n).
+\end{equation*}
+and assume that $F$ satisfies the conditions described in Section \@ref(block-maxima-approach) so that for large $n$,
+\begin{equation*}
+\Prob{M_n\leq z} \approx G(z)
+\end{equation*}
+where 
+\begin{equation*}
+G(z) = \exp\left\lbrace -\left[1+\xi\left(\frac{z-\mu}{\sigma}\right)\right]_{+}^{-1/\xi}\right\rbrace,\quad \mu,\xi\in\R,\,\sigma>0.
+\end{equation*}
+Denote by $X$ an arbitrary term in the $X_i$ sequence. For large enough $u$, the distribution function of $(X-u)$ conditional on $X>u$ is approximately
+\begin{equation}
+H(y) = 1-\left(1+\frac{\xi y}{\tilde{\sigma}}\right)_{+}^{-1/\xi}, \quad y>0,
+(\#eq:gpd-distribution)
+\end{equation}
+where 
+\begin{equation*}
+\tilde{\sigma} = \sigma + \xi(u-\mu).
+\end{equation*}
+The distribution characterised by \@ref(eq:gpd-distribution) is called the generalised Pareto dsitribution (GPD). The GPD parameters of threshold excesses are uniquely determined by those of the associated GEV distribution of block maxima. In particular, the shape parameters $\xi$ in \@ref(eq:gev-distribution) and \@ref(eq:gpd-distribution) are equal. 
+
+Similar considerations for choosing the block size are applicable to choosing the threshold $u$. If $u$ is too low, then the asymptotic theory may be invalid and the GPD distribution may not fit well. If $u$ is too high, then few extremal events will be observed and the GPD parameter estimates will have high variance. The threshold  is typically selected using graphical diagnostic tools, such as the mean residual life plot or threshold stability plot. The mean residual life plot is based on the premise that, for a sufficiently high threshold $u$, the mean excess $\E{X-u\mid X>u}$ is linear in $u$. The threshold stability plot assesses possible choices for $u$ by examining when estimates for the GPD parameters become invariant under changes in the threshold. (The scale parameter in \@ref(eq:gpd-distribution) is not threshold invariant, so a slight reparameterisation is required for this method.)
+
+## Multivariate extremes {#multivariate-extremes}
+
+Multivariate extreme value theory (MEV) is concerned with studying the extremes of several processes. The individual processes can be modelled by univariate techniques but there are advantages in studying the multivariate process as a whole. For example, we may be interested in modelling a combination of the processes (structure variables) or exploiting dependencies to improve inference. For notational simplicity we focus on the bivariate case, but the concepts generalise naturally to higher dimensions. 
+
+### Asymptotic theory {#multivariate-asymptotic-theory}
+
+Suppose $\{(X_i,Y_i)\}_{i=1}^\infty$ is a sequence of iid random vectors with joint distribution function $F(x,y)$. The vector of componentwise maxima is defined by 
+\begin{equation*}
+M_n = (M_{X,n}, M_{Y,n})
+\end{equation*}
+where
+\begin{equation*}
+M_{X,n} = \max(X_1,\ldots,X_n),\qquad 
+M_{Y,n} = \max(Y_1,\ldots,Y_n).
+\end{equation*}
+Since $\{X_i\}$ and $\{Y_i\}$ are sequences of independent univariate random variables, standard univariate extreme value results apply to the components. Assume that $X_i$ and $Y_i$ are standard Fréchet distributed, i.e. they have distribution function 
+\begin{equation*}
+F(z)=\exp(-1/z), \quad z>0.
+\end{equation*}
+This is without loss of generality, because any EV distribution can be converted to a unit Fréchet distribution using the probability integral transform. This is a special case of the GEV distribution with $\mu=0$, $\sigma=1$ and $\xi=1$. 
+Now define the rescaled vector
+\begin{equation*}
+M_n^\star = (M_{X,n}^\star, M_{Y,n}^\star)
+\end{equation*}
+where
+\begin{equation}
+M_{X,n}^\star = \frac{1}{n}\max(X_1,\ldots,X_n), \qquad
+M_{Y,n}^\star = \frac{1}{n}\max(Y_1,\ldots,Y_n).
+(\#eq:rescaled-componentwise-maxima)
+\end{equation}
+If 
+\begin{equation}
+\Prob{M_{X,n}^\star\leq x, M_{Y,n}^\star\leq y} \to G(x,y), \quad n\to\infty,
+(\#eq:limiting-distributions)
+\end{equation}
+where $G$ is a non-degenerate distribution function, then 
+\begin{equation}
+G(x,y) = \exp\left\lbrace -V(x,y) \right\rbrace, \quad x>0, \, y>0
+(\#eq:bivariate-ev-class)
+\end{equation}
+where 
+\begin{equation*}
+V(x,y) = 2\int_0^1 \max\left(\frac{w}{x},\frac{1-w}{y}\right) \,\dee H(w)
+\end{equation*}
+is called the exponent measure and the angular measure $H$ is a distribution function on $[0,1]$ satisfying
+\begin{equation}
+\int_0^1 w \,\dee H(w) = 1/2.
+(\#eq:H-mean-constraint)
+\end{equation}
+The family of distributions that arise as limits in \@ref(eq:limiting-distributions) is called the class of bivariate extreme value distributions. There is a one-to-one mapping between this class and the set of distribution functions $H$ on $[0,1]$ satisfying the mean constraint \@ref(eq:H-mean-constraint). Unlike the class of univariate extreme value distributions, the family of bivariate extreme value distributions has no finite parametrisation. One approach to circumvent this difficulty is to use a parametric sub-family of distributions for $H$, suitably chosen so that parametric family approximates a wide sub-class of the entire limit family. A common choice is the logistic family, defined by
+\begin{equation}
+V_{\alpha}(x,y) = \left(x^{-1/\alpha}+y^{-1/\alpha}\right)^\alpha,\quad x,y>0
+(\#eq:logistic-family)
+\end{equation}
+for $\alpha\in(0,1)$. The logistic family is obtained by letting $H$ have density function
+\begin{equation*}
+h(w) = \frac{1}{2}(\alpha^{-1}-1)\left(w(1-w)\right)^{-1-1/\alpha}\left(w^{-1/\alpha}+(1-w)^{-1/\alpha}\right)^{\alpha-2},\quad 0<w<1.
+\end{equation*}
+By symmetry it is easy to see that this satisfies the mean constraint \@ref(eq:H-mean-constraint). A nice property of the logistic family is that it covers all levels of dependence. In particular, as $\alpha\to 1$, 
+\begin{equation*}
+G(x,y) \to \exp\left\lbrace -(x^{-1}+y^{-1}) \right\rbrace
+\end{equation*}
+corresponding to complete independence, and as $\alpha\to 0$,
+\begin{equation*}
+G(x,y) \to \exp\left\lbrace -\max(x^{-1},y^{-1}) \right\rbrace
+\end{equation*}
+corresponding to perfectly dependent variables. Other popular parametric families include the bilogistic and Dirichlet distributions, which permit asymmetry in the dependence structure.
+
+### Extreme value copulas {#ev-copulas}
+
+Copulas provide an alternative way to describe the dependence structure of a multivariate  distribution, both in extreme values and more generally [@beirlantStatisticsExtremesTheory2004]. If a multivariate distribution $F$ has margins $F_1,\ldots,F_n$, then Sklar's theorem states that there exists a distribution function $C$ with $\uniform{0}{1}$ margins such that for any $x\in\R^n$,
+\begin{equation*}
+F(x)=C\left(F_1(x_1),\ldots,F_n(x_n)\right)
+\end{equation*}
+and $C$ is termed a copula for $F$. The copula $C^{\text{EV}}$ for a multivariate EV distribution $G$ must satisfy the stability property
+\begin{equation*}
+C^{\text{EV}}(u) = \left[C^{\text{EV}}(u_1^{1/k}, \ldots, u_n^{1/k})\right]^{k}
+\end{equation*}
+for any $u\in[0,1]^n$ and $k>0$. In the bivariate case, an EV copula can be expressed as 
+\begin{equation}
+C^{\text{EV}}(u,v) = \exp\left(\log(uv)\cdot A\left(\frac{\log (v)}{\log (uv)}\right)\right), \qquad (u,v)\in[0,1]^2
+(\#eq:ev-copula)
+\end{equation}
+where $A$ is the Picklands dependence function (see Section 8.2.5 of @beirlantStatisticsExtremesTheory2004 for details.)
+
+### Componentwise block maxima approach {#componentwise-block-maxima-approach}
+
+Just as in the univariate setting, we can develop approaches for modelling multivariate extremes based on block maxima and threshold exceedances.
+
+Suppose we observe a series $\{(x_i,y_i)\}_{i=1}^n$ of independent vectors, from which we form the sequence of componentwise block maxima $\{(z_{1,i},z_{2,i})\}_{i=1}^m$. Each series $z_{1,1},\ldots,z_{1,m}$ and $z_{2,1},\ldots,z_{2,m}$ can be approximately modelled by a GEV distribution. That is, each $z_{i,j}$ is an independent realisation of a random variable $Z_i\sim\gev{\mu_i}{\sigma_i}{\xi_i}$ for $i=1,2$. Estimates for the GEV parameters, denoted $(\hat{\mu}_i,\hat{\sigma}_i,\hat{\xi}_i)$ for $i=1,2$, can be obtained by maximum likelihood estimation. Since the transformed variables
+\begin{equation}
+\tilde{Z}_i = \left[1+\hat{\xi}_i\left(\frac{Z_i-\hat{\mu}_i}{\hat{\sigma}_i}\right)\right]^{1/\hat{\xi}_i},\quad i=1,2,
+(\#eq:standardise-gev)
+\end{equation}
+are approximately standard Fréchet distributed, the pairs $(\tilde{z}_{1,j},\tilde{z}_{2,j})$ obtained by substituting $(z_{1,j},z_{2,j})$ into \@ref(eq:standardise-gev) are independent realisations of a vector with bivariate extreme value distribution belonging to the class \@ref(eq:bivariate-ev-class). Denote the density function of this distribution by $g(x,y)$. Assuming a model for $V$ with parameter $\theta$, e.g. the logistic model with $\theta=\alpha$, the likelihood function is
+\begin{equation*}
+L(\theta) = \prod_{i=1}^m g(\tilde{z}_{1,j},\tilde{z}_{2,j}).
+\end{equation*}
+Standard methods yield maximum likelihood estimates and standard errors of $\theta$.
+
+### Measures of extremal dependence {#measures-of-extremal-dependence}
+
+Let $X$ and $Y$ have marginal distribution functions $F_X$ and $F_Y$ respectively and consider
+\begin{equation*}
+\chi = \lim_{u\to 1}\Prob{F_Y(y)>u|F_X(x)>u}.
+\end{equation*}
+If $\chi=0$ then $X$ and $Y$ are are asymptotically independent, while $\chi>0$ corresponds to asymptotic dependence. A larger value of $\chi$ indicating stronger dependence between $X$ and $Y$ at the extremes. and that within the class of asymptotically dependent variables, the value of $\chi$ increases with the strength of dependence at extreme levels. Based on these properties, $\chi$ provides a simple measure of extremal dependence, and it is termed the coefficient of extremal dependence. For the bivariate extreme value distribution with distribution function $G(x,y)=\exp\left\lbrace -V(x,y)\right\rbrace$, we have the useful relation
+\begin{equation}
+\chi=2-V(1,1).
+(\#eq:chi-and-V)
+\end{equation}
+Thus $V(1,1)$ can equivalently be seen as a measure of extremal dependence.
+For the logistic family, \@ref(eq:logistic-family) and \@ref(eq:chi-and-V) yield
+\begin{equation*}
+\chi = 2-2^\alpha.
+\end{equation*}
+Thus $\alpha$ can be interpreted as an extremal dependence parameter.
+
+

@@ -1,0 +1,69 @@
+% *************                
+% LATEX PACKAGES
+% *************
+
+\usepackage{bm, bbm}
+\usepackage{subfig}
+
+% *************                
+% LATEX COMMANDS
+% *************
+
+% sets
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+% calculus
+\newcommand{\dee}{\mathrm{d}}
+\newcommand{\Dee}{\mathrm{D}}
+\newcommand{\diff}[2]{\frac{\mathrm{d} #1}{\mathrm{d} #2}}
+\newcommand{\ddiff}[2]{\frac{\mathrm{d}^2 #1}{\mathrm{d} #2^2}}
+\newcommand{\pdiff}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\pddiff}[2]{\frac{\partial^2 #1}{\partial #2^2}}
+\newcommand{\mdiff}[2]{\frac{\mathrm{D} #1}{\mathrm{D} #2}}
+
+% functions
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
+
+% convergence
+\newcommand{\inas}{\stackrel{\text{a.s.}}{\rightarrow}} % converge almost surely
+\newcommand{\inp}{\stackrel{\mathcal{P}}{\rightarrow}} % converge in prob.
+\newcommand{\ind}{\stackrel{\mathcal{D}}{\rightarrow}} % converge in dist.
+
+% operators
+\newcommand{\E}[1]{\mathbb{E}[ #1 ]} % expectation E[]
+\newcommand{\Prob}[1]{\mathbb{P}\left( #1 \right)} % probability P[]
+\newcommand{\Var}[1]{\mathrm{Var}( #1 )} % variance Var()
+\newcommand{\SD}[1]{\mathrm{SD}( #1 )} % standard deviation SD()
+\newcommand{\Cov}[2]{\mathrm{Cov}\left( #1 , #2 \right)} % covariance Cov(,)
+\newcommand{\indic}[1]{\mathbbm{1}\left\lbrace #1 \right\rbrace)} % indicator 1{}
+
+% likelihood
+\newcommand{\lkhd}[2]{\mathcal{L}\left(#1|#2\right)} % likelihood L_{}()
+\newcommand{\loglkhd}[2]{\ell\left(#1|#2\right)} % log-likelihood l_{}()
+
+% distributions
+\renewcommand{\tilde}{\widetilde} % make tilde wider
+\newcommand{\simiid}{\stackrel{\text{iid}}{\sim}} % tilde with iid over
+\newcommand{\approxsim}{\mathrel{\dot\sim}} % tilde with dot on top, approximately distributed as
+\newcommand{\binomial}[2]{\mathrm{Bin}\left(#1,#2\right)} % Bin(,)
+\newcommand{\expdist}[1]{\mathrm{Exp}\left(#1\right)} % Exp(,)
+\newcommand{\uniform}[2]{\mathrm{U}\left(#1,#2\right)} % U(,)
+\newcommand{\normal}[2]{\mathrm{N}\left(#1,#2\right)} % N(,)
+\newcommand{\gev}[3]{\mathrm{GEV}\left(#1,#2,#3\right)} % GEV(, ,)
+
+% ordinal text
+\renewcommand{\th}{\textsuperscript{th}} % ex: I won 4\th place
+\newcommand{\nd}{\textsuperscript{nd}}
+\renewcommand{\st}{\textsuperscript{st}}
+\newcommand{\rd}{\textsuperscript{rd}}
+
+% notes to self and placeholder text
+\newcommand\todo[1]{\textcolor{red}{\textbf{TO DO: #1}}} % 'to do' note
+\usepackage{lipsum} % lorem ipsum placeholder text

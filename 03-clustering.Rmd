@@ -1,0 +1,180 @@
+# Clustering {#clustering}
+\chaptermark{Clustering}
+\minitoc
+
+\noindent This chapter discusses spatial clustering methods for extreme events. Section \@ref(clustering-motivation) motivates the use of clustering in the context of extreme value analysis. The main aims are to detect spatial patterns, reduce dimensionality, and improve statistical efficiency by pooling information. Section \@ref(clustering-pam) examines partitioning methods, which employ the PAM algorithm equipped with a suitable dissimilarity measure to identify spatial clusters. Bayesian hierarchical clustering algorithms are discussed in Section \@ref(clustering-hierarchical). Section \@ref(clustering-extensions) proposes some extensions and modifications to the models in the literature. 
+
+## Motivation {#clustering-motivation}
+
+Clustering is the task of allocating elements to groups according to how similar (in some sense) they are. Spatial clustering of extremes aims to group locations according to the similarity of their extremal behaviour. 
+
+Cluster analysis may be performed as an end in itself to detect, summarise and visualise important spatial patterns in data. For example, @badorFutureSummerMegaheatwave2017 conducted a study of heatwaves in France and identified a region heavily influenced by the Mediterranean Sea, which comprised fewer sites than initially expected. In this way, clustering can reveal surprising patterns and generate novel insights, which may advance theoretical understanding within the field of application. 
+
+More commonly, clustering is employed within a broader analysis. Typically, it is used to reduce dimensionality and improve statistical efficiency. Suppose we are interested in modelling extreme events at $N$ spatial locations. Clustering seeks to group the sites into (typically) $K\ll N$ clusters such that extremal behaviour of sites within each cluster is deemed to be similar. Information relating to sites belonging to the same cluster can be pooled to obtain more reliable estimates of quantities of interest, e.g. GEV/GPD parameters for the marginal distributions. For example, @rohrbeckBayesianSpatialClustering2020 pool information across Norwegian municipalities to improve the modelling of extreme precipitation. @badorFutureSummerMegaheatwave2017 model the long term future evolution of heatwave events in five coherent climatological regions (as opposed to modelling each site individually). In each of these applications, clustering facilitates the spatial pooling of information. Without pooling these models would be less reliable, because the estimates would be based on small amounts of data that could not be reliably extrapolated to rarer events.
+
+## Partitioning around medioids (PAM) {#clustering-pam}
+
+Many popular clustering algorithms are ill-suited to extreme value analysis. For example, algorithms such as k-means or Gaussian mixture models (GMMs) aim to identify patterns in mean behaviours by minimising intracluster variances. These methods are particularly intended for variables that are approximately Gaussian, or a Gaussian mixture, where the mean and variance are meaningful summaries of the target variable. As such, they are not appropriate for clustering extremes, where the variables of interest typically have highly skewed, heavy-tailed distributions [@bernardClusteringMaximaSpatial2013]. 
+
+The PAM algorithm was developed by @kaufmanFindingGroupsData1990 and belongs to a class of algorithm called k-medioids. It is closely related to the k-means algorithm, but there are two important differences. First, it replaces Euclidean distance (variance) with an arbitrary pairwise dissimilarity measure. How this measure should be chosen will be discussed later, but the salient point is that it can be tailored for extremes. Second, cluster prototypes are represented by medioids instead of centroids. The medioid of a cluster is defined as the element with minimal average dissimilarity to all other elements in its cluster. <!--Since medioids correspond to actual data points, the PAM algorithm preserves the max-stable property. Centroids fail to do this: the average of maxima is not necessarily a maximum. -->
+
+The PAM algorithm works as follows. Suppose we are given a set of $N$ objects to be clustered into $K$ groups. Let $d_{ij}$ denote the pairwise dissimilarity between objects $i$ and $j$. Then:
+\begin{enumerate}
+\item Randomly initialise a set of $K$ medioids (i.e. select $K$ sites).
+\item Form $K$ clusters by assigning each site to its nearest (i.e. least dissimilar) medioid.
+\item For each cluster, find the new medioid which minimises the average/sum of the within-cluster dissimilarities.
+\item If (3) caused at least one medioid to change, return to (2). Otherwise, terminate the algorithm.
+\end{enumerate}
+The PAM algorithm is a general purpose algorithm. It is not specifically designed for extremes. However, an appropriately chosen dissimilarity measure will result in assignments based on extremal behaviour. A variety of metrics have been proposed in the literature, which will be discussed in this section. There is no single best choice of dissimilarity measure. The measure should be chosen so that the clustering behaviour is desirable in the context of the problem at hand. 
+
+@bernardClusteringMaximaSpatial2013 propose clustering sites based on the F-madogram distance, a measure of pairwise extremal dependence. Let $M_i$ denote the block maxima at location $i$ for $i=1,\ldots,N$, with marginal distribution $F_i(u)=\Prob{M_i\leq u}$. Then the distribution function of $(M_i,M_j)$ is approximately given by
+\begin{equation}
+G_{ij}(x,y) = \exp\left\lbrace -V_{ij}(x,y) \right\rbrace, \quad x>0, \, y>0
+\end{equation}
+where 
+\begin{equation*}
+V_{ij}(x,y) = 2\int_0^1 \max\left(\frac{w}{x},\frac{1-w}{y}\right) \,\dee H_{ij}(w)
+\end{equation*}
+and $H_{ij}$ is a distribution function on $[0,1]$ satisfying \@ref(eq:H-mean-constraint). The F-madogram distance between locations $i$ and $j$ is defined as the mean absolute distance between $F_i(M_i)$ and $F_j(M_j)$, that is 
+\begin{equation*}
+d_{ij} := \frac{1}{2}\mathbb{E}\abs{F_i(M_i)-F_j(M_j)}.
+(\#eq:F-madogram-V)
+\end{equation*}
+@cooleyVariogramsSpatialMaxstable2006 show that this can be equivalently expressed as 
+\begin{equation*}
+d_{ij} := \frac{V_{ij}(1,1)-1}{2(V_{ij}(1,1)+1)}.
+(\#eq:F-madogram-V-equiv)
+\end{equation*}
+The F-madogram distance has several properties that make it a good candidate for the PAM dissimilarity measure. First, it is an interpretable distance that can be directly related to the strength of dependence in the maxima $M_i$ and $M_j$. Recall from Section \@ref(measures-of-extremal-dependence) that $V(1,1)$ is related to the coefficient of extremal dependence via $\chi=2-V(1,1)$. Thus, if the maxima at $i$ and $j$ are highly dependent then $V_{ij}(1,1)\approx 1$ and so $d_{ij}\approx 0$. If $M_i$ and $M_j$ are almost independent, then $V_{ij}(1,1)\approx 2$ and $d_{ij}\approx 1/6$. Second, it is straightforward to compute non-parametric estimates $\hat{d}_{ij}$ of the F-madogram distances (see @bernardClusteringMaximaSpatial2013 for details). This avoids the need to fit GEV marginals at each site, so computing the dissimilarity matrix $D=(d_{ij})$ is cheap and fast. This property is not insignificant: forming the distance matrix is often a major bottleneck in PAM problems [@schubertFastEagerKMedoids2020]. Third, the F-madogram distance depends only on the pairwise extremal dependence and not on the marginal laws. This follows from the fact that $d_{ij}$ depends only on $F_i(M_i)$ and $F_j(M_j)$, which are uniformly distributed by the probability integral transform theorem. Decoupling the dependence and margins may be desirable and simplifies the interpretation of the resulting clusters, since the bivariate concept of pairwise extremal dependence is not conflated with the univariate notion of having similarly scaled marginal distributions (i.e. extreme events of similar intensity). Finally, the F-madogram measure requires no geographical information, so it is viable even if location data is unavailable or if defining/computing distances between locations is difficult, e.g. due to complicated topography.
+
+A composite measure is adopted by @brackenSpatialVariabilitySeasonal2015, which combines F-madogram distances with physical geographical distances. If the spatial domain is large and $N$ is large, then there is a chance that two distant sites will have similarly shaped extreme value distributions despite there being no true underlying dependence. Accounting for distances reduces the chance of such sites being misclassified. Moreover, the clusters derived from a measure that incorporates geographical proximity tend to be more contiguous, which may aid interpretability [@brackenSpatialVariabilitySeasonal2015, Figure 3]. This metric requires that we know sites' locations and can approximately compute distances between them (usually Euclidean or Haversine distances, depending on the size of the spatial domain). Incorporating geographical data into the algorithm may also compromise our ability to detect unexpected spatial patterns, especially if the criteria are not scaled or weighted appropriately.
+
+A further extension is added by @mornetWindStormRisk2017, namely to include the resemblance of two sites' observed maxima, as measured by the Euclidean norm of the difference in their respective time series. While this metric destroys the decoupling of dependence and marginal distributions discussed earlier, its inclusion may be desirable in some cases. @mornetWindStormRisk2017 sought to identify 'risk zones' comprising French departments that are struck by storm events of similar magnitudes. Moreover, they proceed to fit GPD models to each of the six identified risk zones. It only makes sense to speak of a zone-level GDP scale parameter if the extreme events within each zone are of comparable intensity.
+
+The PAM approach is versatile and the clustering behaviour can be tailored according to the objectives of a particular analysis. In particular, we can include any of the three aforementioned dissimilarity elements (F-madogram, proximity, resemblance), or add a new metric of our own. The influence of each term can be controlled by specifying its relative contribution to the total dissimilarity measure. In the absence of a priori 'true partitions' to train on, defining a formal mechanism to optimise the weighting attached to each criterion would be complicated and has not been attempted. @mornetWindStormRisk2017 simply weight each criterion equally, while @brackenSpatialVariabilitySeasonal2015 scale the geographical distances so that they never exceed the largest value of the F-madogram distances. The weights should be chosen according to the desired clustering behaviour. To understand the behaviour of each measure, we find clusters (shown in Figure \@ref(fig:pam-fr-rain)) in the France precipitation data produced by the PAM algorithm for $K=7$. Each panel corresponds to using one of the three dissimilarity criteria, i.e. in each case one of elements is given 100\% weighting and the other two 0\% weighting. The clusters resulting from the F-madogram and proximity measures are fairly similar, with some minor but potentially meaningful differences in cluster allocations on the north-west and east coasts. This is unsurprising: nearby sites are likely to exhibit extremal dependence. Clustering purely on the basis of the resemblance in the series of observed precipitation maxima results in highly incohesive clusters. Although the clusters do not directly contain any information about extremal dependence, similarities in the marginal distributions may be caused by extremal dependence. The marked difference between the first/second and third set of clusters illustrates how combining measures related to the marginal distributions and the pairwise dependencies may result in clusters that lack a simple interpretation.
+
+```{r pam-cluster-function, include=FALSE}
+PAMcluster <- function(x, K, method = "fmadogram", long = NULL, lat = NULL){
+  
+  # DESCRIPTION:
+  #   Computes K clusters from x using PAM with F-madogram distances
+  # INPUTS:
+  #   x : an MxN matrix, each column contains a time series for each location
+  #   K : number of clusters
+  #   method :
+  #     "fmadogram" -- F-madogram distance
+  #     "proximity" -- Haversine distance
+  #     "resemblance" -- Euclidean norm of difference in time series
+  #     "mixed" -- all the above, weighted equally
+  #   long : N vector of longitude coords (only required for "proximity")
+  #   lat : N vector of latitude coords (only required for "proximity") 
+  # OUTPUTS:
+  #   output : an object of class 'pam'
+  
+  N <- ncol(x) # number of sites
+  M <- nrow(x) # number of measurements (denoted T in the paper)
+  # F-madogram distance
+  V = array(NaN, dim = c(M, N)) # initialise array to store empirical CDFs
+  for(p in 1:N) {
+    x.vec = as.vector(x[,p]) # time series for site p
+    Femp = ecdf(x.vec)(x.vec) # compute empirical CDF
+    V[,p] = Femp # store in V
+  }
+  D1 <- dist(t(V), method = "manhattan")
+  # proximities
+  D2 <- geodist(x = cbind(long, lat), measure = "haversine")
+  # resemblance -- replace this with dist(x)?
+  D3 <- matrix(0, nrow = N, ncol = N)
+  for (i in 2:N){
+    for (j in 1:(i-1)){
+      D3[i,j] <- sqrt(sum((x[,i]-x[,j])^2))
+      D3[j,i] <- D3[i,j]
+    }
+  }
+  D <- if (method=="fmadogram"){
+    D1 
+  } else if (method=="proximity"){
+      D2
+  } else if (method=="resemblance"){
+      D3
+  } else {
+      D1 + D2 + D3
+    }
+  # Clustering with PAM
+  output = cluster::pam(x = D, k = K)
+  return(output) 
+}
+```
+
+```{r pam-fr-rain, echo=FALSE, fig.cap="French precipitation maxima clusters obtained by the PAM algorithm with $K=7$ using each of the three different dissimiliarity components.", fig.scap="PAM clusters for the French precipitation maxima data", out.width="100%"}
+
+par(mfrow=c(1,3))
+for (method in c("fmadogram", "proximity", "resemblance")){
+  for (K in c(7)){
+    # run the clustering algorithm
+    res <- PAMcluster(x = frx, K = K, method = method, long = frLong, lat = frLat) 
+    # store the vector of medioids
+    medoids <- as.vector(res$medoid)
+    # compute silhouette coefficients
+    sil <- cluster::silhouette(res) 
+    # prepare map
+    colorK <- rainbow(K)
+    neighbors <- c("France","Spain","Germany","Belgium","Italy","Switzerland","Luxembourg","Netherland","Monaco","Andorra")
+    bgOcean <- "white"
+    bgFrance <- "grey85"
+    map("worldHires", neighbors, col = "grey95", fill = T, bg = bgOcean, xlim = c(-5.0,9.5), ylim = c(41.5,51), mar=c(1.5,0.2,1.5,0.2))
+    map("worldHires", "France", col = bgFrance, fill = T, add = T)
+    map.axes(xaxt='n', yaxt='n', ann=FALSE)
+    grid()
+    title(main = ifelse(method=="fmadogram", "F-madogram",
+                        ifelse(method=="proximity", "Proximity", 
+                               ifelse(method=="resemblance", "Resemblance", "Mixed"))))
+    points(frLong, frLat, col = "black", pch = 20, cex = 0.8) 
+    # add the clustered points to the map
+    for(i in 1:K){
+      selection <- as.integer(rownames(sil[(sil[,"cluster"]==i),]))
+      points(frLong[selection],frLat[selection], pch=23, col=0, bg=colorK[i], cex=1)
+    }
+  }
+}  
+```
+
+The PAM algorithm has been applied across a variety of domain sizes, time horizons, and target variables [@badorSpatialClusteringSummer2015]. It can be used to detect spatial patterns in data and/or as a dimensionality reduction step prior to further analysis. A key advantage is its versatility and simplicity: we specify a dissimilarity measure of our choosing, compute the dissimilarity matrix, and run the PAM algorithm. Here we have focussed on models which cluster sites with similar tail behaviour with respect to a single variable, but the scope of PAM approaches is much broader. For example, @vignottoClusteringBivariateDependencies2021 use PAM clustering to identify subregions with a similar dependence structure in the tails of a bivariate distribution. The resulting groups are to be interpreted in terms of their susceptibility to co-occurring extreme events. However, PAM-based clustering has several limitations. First, the time complexity of PAM is $\mathcal{O}(K(N-K)^2I)$, where $I$ is the number of iterations required for convergence [@mannorKMedoidsClustering2011]. This is prohibitive for large scale problems. The issue is exacerbated by the need to perform multiple runs to find the global optimum, since the output is sensitive to the medioid initialisations. Improving run-time complexity of PAM is an area of ongoing research [@schubertFastEagerKMedoids2020]. The CLARA algorithm, a k-medioids algorithm which incorporates random sampling in the cluster update step, may be a better choice for large applications [@kaufmanFindingGroupsData1990]. Secondly, there is no mechanism within the algorithm to update the number of clusters. Instead, the parameter $K$ must be pre-specified in advance. The standard approach for tuning $K$ is to run PAM for several values of $K$ and select the value which results in the best clustering according to some criterion, e.g. the silhouette coefficient. Thirdly, certain scenarios cause PAM to produce spurious clusterings [@saundersRegionalisationApproachRainfall2020]. The algorithm is biased towards placing medioids in regions where the density of points in F-madogram space is high. Locations that are equidistant from medioids (the finite range of the F-madogram distance means this is likely to occur) are allocated in an arbitrary and potentially misleading way. Finally, PAM is purely a clustering algorithm; information pooling and model fitting steps are considered separate steps. Many of these limitations can be addressed by moving towards a hierarchical approach to clustering. Further suggestions for improvement will be discussed in Section \@ref(clustering-extensions).
+
+## Bayesian hierarchical modelling {#clustering-hierarchical}
+
+Hierarchical models are a natural and popular approach for modelling spatial processes. In this section, we look at how hierarchical models are used to identify spatial clusters for extremes and borrow information across locations to enhance statistical efficiency. 
+
+In a Bayesian hierarchical model, data is assumed to comprise several groups. Each group is considered a collection of exchangeable random variables. Treating the hyperparameters (e.g. number of clusters) as fixed, the groups' parameters are updated via Bayes' theorem using the data from each group. Applying Bayes' theorem again yields the posterior distribution of the hyperparameters given the data. The common dependence between the parameters and the hyperparameters means that each group's distribution is informed by data from all groups. Hierarchical models can be studied from a frequentist perspective, but are commonly analysed in a Bayesian framework, which allows uncertainty to be quantified and propagated through the model. For more detail on hierarchical models, see @schervishTheoryStatistics1995. 
+
+@carreauPartitioningHazardSubregions2017 propose a peaks-over-threshold model in which the GPD scale parameter varies smoothly across space while the shape parameter is constant within clusters. At any spatial location $x$, the excess above a high threshold $Y$ is modelled by a conditional mixture of GPDs,
+\begin{equation}
+\begin{split}
+\Prob{Y\leq y \mid x} &= \sum_{j=1}^K \Prob{C=j \mid x}\Prob{Y\leq y \mid C=j,x} \\
+\Prob{Y\leq y \mid C=j,x} &= G(y;\sigma(x),\xi_j)
+\end{split}
+(\#eq:carreau-mixture)
+\end{equation}
+where $G$ is the GP distribution function, $C$ is a discrete random variable representing the cluster the site belongs to, the scale parameter $\sigma(\cdot)$ is a smooth function of $x$, and $\xi_j$ is the shape parameter for cluster $j$. The inference procedure has two steps: estimate the spatial partition by applying k-means clustering to an extreme value summary statistic; estimate $\Prob{C=j|x}$, $\sigma(\cdot)$ and $\{\xi_1,\ldots,\xi_K\}$ using probability weighted moment (PWM) estimators. Since k-means yields hard cluster assignments, the conditional mixture in \@ref(eq:carreau-mixture) simplifies to a single term.
+
+The key benefit of the approach of @carreauPartitioningHazardSubregions2017 is that clustering facilitates information pooling to improve estimation of the GPD shape parameter, which is generally difficult to estimate and subject to high uncertainty. However, their algorithm has several limitations. Using a clustering algorithm which results in hard assignments means that the mixture model formulation is not fully utilised. As a result, information pooling is restricted to sites belonging to the same cluster and the distribution of $Y$ changes sharply at the cluster boundaries. Moreover, clustering is based solely on the GPD shape parameter. This is sensible because the model fitting step assumes the shape parameter is constant with clusters, but means that no consideration is given to spatial dependence. Thirdly, the number of clusters is fixed and tuned by a cross validation procedure.
+
+The spatial Markov model proposed by @reichSpatialMarkovModel2019 is much less restrictive. A GEV distribution is fitted at each location, whose parameters are allowed to vary in space and time. Sites are allocated to $K$ clusters via the spatial Potts model, whereby the partition probabilities are determined by the adjacency structure of the locations. The Potts parameter $\phi>0$ controls the rate of decay of spatial dependence as a function of distance. The probability that two sites are allocated to the same cluster tends to $1/K$ as the distance between them tends to infinity. Given the cluster labels, the observations within a cluster are assumed to follow a multivariate extreme value distribution. @reichSpatialMarkovModel2019 use the symmetric logistic model with dependence parameter $\alpha$, which captures the full spectrum of small-scale dependence (see Section \@ref(measures-of-extremal-dependence)), but other choices are possible. Model fitting is performed in a Bayesian framework and full conditional distributions are available, permitting an efficient Gibbs sampling scheme.
+
+The @reichSpatialMarkovModel2019 approach improves upon that of @carreauPartitioningHazardSubregions2017 by permitting spatial dependence. In particular, the strength of spatial dependence over various scale can be controlled via $\alpha$, $\phi$ and $K$. Unfortunately, specifying a full model for the spatial dependence means that the model fitting procedure is prohibitively expensive in practice, so their proposed computational algorithm requires several simplifications, including fixing the Potts parameter. Another limitation is that there is no mechanism to update the number of clusters. Choosing an optimal $K$ is complicated by the fact that it determines the limiting strength of long-range dependence. The @reichSpatialMarkovModel2019 model does not permit the strength of dependence to vanish to zero as the distance between two sites tends to infinity; instead, it asymptotes at $1/K$. Therefore $K$ should be large if long-range dependence is undesirable. This may conflict with our broader goals of dimensionality reduction and information pooling. Another limitation is that the spatial Markov model is designed for modelling block maxima. Adapting it for threshold exceedances requires additional assumptions and parameters, which causes further computational complications. 
+
+The Bayesian model devised by @rohrbeckBayesianSpatialClustering2020 clusters sites according their marginal tails and extremal dependence, with threshold exceedances for all sites in the same cluster modelled by a common GPD. Given a number of clusters and a set of cluster labels, the pairwise extremal dependence between adjacent sites is given by a beta distribution model. The model is parametrised in such a way that: sites belonging to the same cluster have stronger extremal dependence, on average; spatial dependence decays exponentially with distance, with a common rate of decay between clusters and a varying rate within clusters. The number of clusters, the cluster labels, and the marginal and dependence parameters are estimated by Bayesian inference. The prior for the cluster labels places positive probability exclusively on contiguous partitions, which guarantees that the resulting clusters are contiguous. Parameters are updated using a reversible jump MCMC (RJMCMC) algorithm. Thus the number of clusters can be tuned within the computational algorithm, since RJMCMC can simulate from spaces of varying dimension. If the spatial clustering itself is of interest, a point estimate can be obtained by Bayesian decision theory by minimising the posterior mean variation of information loss over the set of all possible clusterings. 
+
+## Extensions {#clustering-extensions}
+
+In this section, we propose some extensions and modifications to the methods discussed in Sections \@ref(clustering-pam) and \@ref(clustering-hierarchical).
+
+In cluster analysis there are two types of partitions: hard and fuzzy. Hard clustering assigns each object to exactly one cluster. Fuzzy clustering generates a fuzzy (soft) clustering whereby each object is assigned a degree of membership to each of the clusters. This approach is more natural in settings where clusters overlap. Our first proposal is to use fuzzy c-medioids clustering instead of (hard) PAM. Several fuzzy c-medioids algorithms have been developed, but that of @carvalhoFuzzyCMedoidsClustering2013 may be of particular interest. They devise an iterative algorithm which generates fuzzy clusters (and cluster prototypes) based on several dissimilarity matrices. Thus the algorithm could generate overlapping clusters given information about, say, the pairwise extremal dependence and geographical proximity of the sites. Although there is a mechanism within the algorithm to learn weightings for the dissimilarity matrices given labelled training data, in most applications we consider there is no known a priori partition, so this feature is not particularly relevant. Fuzzy partitions facilitate a more nuanced interpretation of the detected patterns compared with hard assignments which provide an incomplete and overly simplistic picture.
+
+The second proposal is to replace k-means with fuzzy c-means in the inference step of the @carreauPartitioningHazardSubregions2017 model. Presently, the hard assignments yielded by k-means reduce the GPD mixture in \@ref(eq:carreau-mixture) to a single term. Thus the distribution of $Y$ changes sharply at the cluster boundaries and information pooling is restricted to within single clusters. Switching to a fuzzy clustering method means that each spatial location is potentially associated with several clusters. Sites close to the cluster centre will primarily belong to a single cluster, while those sitting near the borders will share their membership between multiple groups. The result is that information pooling is more extensive and the distribution of $Y$ varies more smoothly with $x$, since the sharp changes in the shape parameter at the cluster boundaries will be smoothed out. 
+
+
+
+
+
+

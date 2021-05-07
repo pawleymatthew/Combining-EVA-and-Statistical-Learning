@@ -1,0 +1,244 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% BATH REPORT TEMPLATE
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Structure of this template:
+%     
+%   1. Page layout - documentclass, geometry, spacing, headers and footers, chapter headings
+%   2. Tables
+%   3. 
+%   3. Bibliography setup
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Metadata is taken from the YAML in index.Rmd
+% Also refers to the bathreport.cls file
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PAGE LAYOUT
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[en-GB, a4paper, $if(page-layout)$$page-layout$$endif$]{templates/bathreport}
+
+% fix to include code in shaded environments
+$if(highlighting-macros)$
+$highlighting-macros$
+
+% set white space before and after code blocks
+\renewenvironment{Shaded}
+{
+  \vspace{$space-before-code-block$}%
+  \begin{snugshade}%
+}{%
+  \end{snugshade}%
+  \vspace{$space-after-code-block$}%
+}
+$endif$
+
+% soul package for correction highlighting
+\definecolor{correctioncolor}{HTML}{CCCCFF}
+\sethlcolor{correctioncolor}
+\newcommand{\ctext}[3][RGB]{%
+  \begingroup
+  \definecolor{hlcolor}{#1}{#2}\sethlcolor{hlcolor}%
+  \hl{#3}%
+  \endgroup
+}
+\soulregister\ref7
+\soulregister\cite7
+\soulregister\autocite7
+\soulregister\textcite7
+\soulregister\pageref7
+
+%%%%%%% PAGE HEADERS AND FOOTERS %%%%%%%%%
+$if(running-header)$
+\fancy$running-header-foot-or-head$[$running-header-position-leftmark$]{\leftmark} 
+\fancy$running-header-foot-or-head$[$running-header-position-rightmark$]{\rightmark} 
+$endif$
+
+% page number positioning
+\fancy$ordinary-page-number-foot-or-head$[$ordinary-page-number-position$]{\thepage} %regular pages
+\fancypagestyle{plain}{\fancyhf{}\fancy$chapter-page-number-foot-or-head$[$chapter-page-number-position$]{\thepage}} %chapter pages
+
+% fix header on cleared pages for openright
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else
+   \hbox{}
+   \fancy$ordinary-page-number-foot-or-head$[$ordinary-page-number-position$]{}
+   \newpage
+   \if@twocolumn\hbox{}\newpage
+   \fi
+   \fancy$running-header-foot-or-head$[$running-header-position-leftmark$]{\leftmark} 
+   \fancy$running-header-foot-or-head$[$running-header-position-rightmark$]{\rightmark} 
+   \fi\fi}
+
+% add footer "DRAFT: Date Time" to every page (apart from chapter heading pages)
+$if(draft-mark)$
+\fancy$draft-mark-foot-or-head$[$draft-mark-position$]{\textbf{DRAFT}: \DTMnow}
+$endif$
+
+% highlight (using colour defined by hlcolor) corrections, e.g. sending a PDF with corrections to supervisor/examiner
+% use \mccorrect{...} to highlight short bits, or \begin{mccorrection} ... \end{mccorrection} for long bits
+$if(corrections)$
+\correctionstrue
+$endif$
+
+%%%%% BIBLIOGRAPHY SETUP
+
+% Setup the style of the bibliography (style chosen in bib-authoryear in index.Rmd YAML)
+% Option 1: author-year in-text citation with an alphabetical works cited.
+% Option 2: numeric in-text citation with references in order of appearance.
+$if(bib-authoryear)$
+\usepackage[style=authoryear, sorting=nyt, backend=biber, maxcitenames=2, useprefix, doi=$if(doi-in-bibliography)$$doi-in-bibliography$$else$false$endif$, isbn=false, uniquename=false]{biblatex}
+\newcommand*{\bibtitle}{$bibliography-heading-in-pdf$}
+$else$
+\usepackage[style=numeric-comp, sorting=none, backend=biber, doi=$doi-in-bibliography$, isbn=false]{biblatex}
+\newcommand*{\bibtitle}{$bibliography-heading-in-pdf$}
+$endif$
+
+$for(bibliography)$
+\addbibresource{$bibliography$}
+$endfor$
+
+% left-aligned (to change font size, put, e.g. \small, after \raggedright)
+\renewcommand*{\bibfont}{\raggedright}
+% increase spacing between entries
+\setlength\bibitemsep{1.75\itemsep}
+
+
+%%%%% EQUATION NUMBERING
+% Uncomment this if you want equation numbers per section (2.3.12), instead of per chapter (2.18):
+%\numberwithin{equation}{subsection}
+
+
+%%%%% THESIS / TITLE PAGE INFORMATION
+% basic information
+\title{$title$}
+\author{$author$}
+\department{$department$}
+\course{$course$}
+\supervisor{$supervisor$}
+\date{$date$}
+
+%%%%% PERSONAL LATEX MACROS
+\input{templates/commands}
+
+%%%%% THE ACTUAL DOCUMENT STARTS HERE
+\begin{document}
+
+%%%%% CHOOSE LINE SPACING
+%\setlength{\textbaselineskip}{$linespacing$}
+\setlength{\textbaselineskip}{18pt plus2pt minus1pt}
+
+% spacing for the roman-numbered pages (acknowledgements, table of contents, etc.)
+\setlength{\frontmatterbaselineskip}{$frontmatter-linespacing$}
+
+% line and paragraph spacing here for the separate abstract page
+\setlength{\abstractseparatelineskip}{13pt plus1pt minus1pt}
+\setlength{\abstractseparateparskip}{0pt plus 1pt}
+
+% general paragraph spacing
+\setlength{\parskip}{2pt plus 1pt}
+
+% university logo
+\def\crest{{\includegraphics[width=9cm]{$university-logo$}}}
+
+% univeristy and submitted text
+\renewcommand{\university}{$university$}
+
+% Leave this line alone; it gets things started for the real document.
+\setlength{\baselineskip}{\textbaselineskip}
+
+%%%%% CHOOSE SECTION NUMBERING DEPTH
+% 0 = chapter; 1 = section; 2 = subsection; 3 = subsubsection, 4 = paragraph...
+% how far down are sections numbered?  (Below that, they're named but don't get numbers.) 
+\setcounter{secnumdepth}{$section-numbering-depth$}
+% what level of section appears in the table of contents?
+\setcounter{tocdepth}{$toc-depth$}
+
+%%%%% ABSTRACT SEPARATE
+% generate a separate abstract page (needed for some submissions)
+$if(abstractseparate)$
+\begin{abstractseparate}
+  $abstract$
+\end{abstractseparate}
+$endif$
+
+% start roman page numbering (for pre-body content)
+\begin{romanpages}
+
+%%%%% TITLE
+\maketitle % see bathreport.cls
+
+%%%%% DEDICATION
+$if(dedication)$
+\begin{dedication}
+  $dedication$
+\end{dedication}
+$endif$
+
+%%%%% ACKNOWLEDGEMENTS
+$if(acknowledgements)$
+\begin{acknowledgements}
+ 	$acknowledgements$
+\end{acknowledgements}
+$endif$
+
+%%%%% ABSTRACT
+$if(abstract)$
+\begin{abstract}
+	$abstract$
+\end{abstract}
+$endif$
+
+%%%%% MINI TABLES
+% for per-chapter, mini tables of contents/figures/tables
+$if(mini-toc)$
+  \dominitoc % include a mini table of contents
+$endif$
+$if(mini-lof)$
+  \dominilof  % include a mini list of figures
+$endif$
+$if(mini-lot)$
+  \dominilot  % include a mini list of tables
+$endif$
+
+% aligns the bottom of the text of each page 
+\flushbottom
+
+%%%%% TABLE OF CONTENTS
+\tableofcontents
+
+%%%%% lIST OF FIGURES
+$if(lof)$
+\listoffigures
+	\mtcaddchapter
+  	% \mtcaddchapter is needed when adding a non-chapter (but chapter-like) entity to avoid confusing minitoc
+$endif$
+
+%%%%% lIST OF TABLES
+$if(lot)$
+\listoftables
+  \mtcaddchapter
+$endif$
+
+%%%%% LIST OF ABBREVIATIONS
+$if(abbreviations)$
+\include{$abbreviations$}
+$endif$
+
+% end roman page numbering 
+\end{romanpages}
+
+%%%%% CHAPTERS AND APPENDICES
+\flushbottom
+$body$
+
+%%%%% REFERENCES
+
+\setlength{\baselineskip}{0pt} % JEM: Single-space References
+
+{\renewcommand*\MakeUppercase[1]{#1}%
+\printbibliography[heading=bibintoc,title={\bibtitle}]}
+
+\end{document}

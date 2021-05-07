@@ -1,0 +1,87 @@
+# Causal inference {#causal-inference}
+\chaptermark{Causal inference}
+\minitoc
+
+\noindent
+
+## Motivation {#causal-inference-motivation}
+
+Many practical questions of interest require an understanding of not only dependencies between rare events, but also their underlying causal structure. For example, causal discovery in extremes may be used to understand the dissemination of floods in a river network, the propagation of risk in financial markets, or the flow of contaminants through an underground waterway [@tranCausalDiscoveryRiver2021]. Causal inference goes beyond the inference of mere association, because it analyses the response of an effect variable when a cause variable is changed. Unveiling causal links is useful for assessing the result of system interventions and the efficacy of mitigation measures.
+
+Causal inference for extreme events is a challenging problem. Ideally, causality between two variables would be established by performing a controlled experiment where all confounding factors are held constant. In reality, such studies are physically impossible or unethical, especially in the application areas that extreme value theory is concerned with (e.g. climatology, environmental science, finance). Therefore we must rely on observed data. When studying rare events such data is necessarily scarce, so tools from extreme value theory must be leveraged. 
+
+Causal inference for extremes is a new, emerging field of research. In this chapter we discuss two state-of-the-art methods. The first uses concepts from algorithmic information theory to deduce causal links via the extreme conditional quantiles (Section \@ref(causal-inference-conditional-quantiles)). The second approach adopts a graphical modelling perspective, adapting existing techniques for the extremes setting (Section \@ref(causal-inference-max-linear-bayesian-networks)). An evaluation of the methods based on their performance on the Hidden River Problem for the upper Danube basin is given in Section \@ref(causal-inference-comparison).
+
+## Extreme conditional quantiles and Kolmogorov complexity {#causal-inference-conditional-quantiles}
+
+The method proposed by @mhallaCausalMechanismExtreme2020 is founded upon the *independence of cause-and-mechanism postulate*: $X$ causes $Y$ if the mechanisms generating $X$ (the random variable describing the cause) and $Y\mid X$ (the random variable describing the effect given the cause) are independent [@daniusisInferringDeterministicCausal2010; @pearlCausalityModelsReasoning2000]. These two mechanisms are then studied  by applying concepts from algorithmic information theory. In particular, by comparing the mechanisms for $X$ and $Y\mid X$ to those describing $Y$ and $X\mid Y$ using measures of complexity in information theory, we decide on the presence and direction of a causal relationship between $X$ and $Y$. In the rest of this section, we outline the different aspects of this approach.
+
+To compare the options that "$X$ causes $Y$" and "$Y$ causes $X$", @mhallaCausalMechanismExtreme2020 initially consider the Kolmogorov complexity of the four random variables [@janzingInformationgeometricApproachInferring2012]. In this context, the independence of cause-and-mechanism postulate implies that $X$ causes $Y$ if the combined Kolmogorov complexities of $X$ and $Y\mid X$ are smaller than those of $Y$ and $X\mid Y$. However, the  Kolmogorov complexity of a probability distribution is non-computable, so the minimum description length (MDL) is used as a proxy. 
+
+The MDL principle, which essentially rephrases Occam's razor, states that the best fitting model from a model class $\mathcal{M}$ is that which produces the shortest code length that describes the data. The code length of a model fitted to observed data can be decomposed into the sum of two parts: the space required to encode the fitted model plus the code length of the data based on the fitted model (i.e. the negative log-likelihood of the fitted model) [@hansenModelSelectionPrinciple2001]. Under the algorithmic information theory formalism, the independence of cause-and-mechanism postulate can be reformulated as follows: if $X$ causes $Y$ then
+\begin{equation}
+\mathrm{CL}_{\mathcal{M}_X}(X) + \mathrm{CL}_{\mathcal{M}_{Y\mid X}}(Y\mid X) \leq \mathrm{CL}_{\mathcal{M}_Y}(Y) + \mathrm{CL}_{\mathcal{M}_{X\mid Y}}(X\mid Y).
+(\#eq:code-length-postulate)
+\end{equation}
+
+The theory described so far holds for causal inference in general settings. The focus now turns to extremes. @mhallaCausalMechanismExtreme2020 apply the MDL principle to quantile-based models for the joint tail of $(X,Y)$. Suppose we observe data 
+\begin{equation*}
+\{(X_i^{\text{ext}},Y_i^{\text{ext}})\}_{i=1}^{n_u}:=\{(X_i,Y_i):X_i>u_X,Y_i>u_Y\}_{i=1}^n
+\end{equation*}
+for high thresholds $u_X,u_Y$. Then the distribution of the joint tail of $(X,Y)$ can be approximated by a bivariate EV distribution with GPD margins $F_X$ and $F_Y$ and extreme value copula $C^{\text{EV}}(u,v)$ (see \@ref(eq:ev-copula)). Models for the $\tau$th quantiles of $X^{\text{ext}}$ and $Y^{\text{ext}}$ and the $\tau$th conditional quantiles of $X^{\text{ext}}\mid Y^{\text{ext}}$ and $Y^{\text{ext}}\mid X^{\text{ext}}$ for $0<\tau<1$ are given by
+\begin{align}
+\begin{split}
+Q_{X^{\text{ext}}}(\tau) &= F_X^{-1}(\tau) \\
+Q_{Y^{\text{ext}}}(\tau) &= F_Y^{-1}(\tau) \\
+Q_{X^{\text{ext}}\mid Y^{\text{ext}}=y>u_Y}(\tau) &= F_X^{-1}\left([\partial_v C^{\text{EV}}]^{-1}\{\tau,F_Y(y)\}\right) \\
+Q_{Y^{\text{ext}}\mid X^{\text{ext}}=x>u_X}(\tau) &= F_Y^{-1}\left([\partial_u C^{\text{EV}}]^{-1}\{F_X(x),v\}\right).
+(\#eq:tau-quantile-forecasts)
+\end{split}
+\end{align}
+
+The fitted marginal quantile models are completely specified by the respective GPD parameters. These parameters are estimated via the same maximum likelihood estimation procedure based on the same number ($n_u$) of observations. Therefore the code lengths for encoding these fitted models are equal. Similarly, fitting the conditional models involves estimating both marginals and the same EV copula, so their code lengths are equal too. It follows that checking \@ref(eq:code-length-postulate) requires knowing only the code lengths of the encoded residuals under the respective fitted models. 
+
+By calculating the required negative log-likelihoods, the causality inequality \@ref(eq:code-length-postulate) becomes
+\begin{equation}
+\hat{S}_{X^{\text{ext}}}(\tau) + \hat{S}_{Y^{\text{ext}}\mid X^{\text{ext}}}(\tau) \leq \hat{S}_{Y^{\text{ext}}}(\tau) + \hat{S}_{X^{\text{ext}}\mid Y^{\text{ext}}}(\tau),
+(\#eq:code-length-postulate-simplified)
+\end{equation}
+where the $\hat{S}(\tau)$ are estimates of the expected quantile scores of the $\tau$th quantile forecasts \@ref(eq:tau-quantile-forecasts) [@gneitingStrictlyProperScoring2007]. 
+
+Since the causal structure should hold for various $\tau$, the dependency on $\tau$ in \@ref(eq:code-length-postulate-simplified) can be omitted. This is achieved by averaging over various values of $\tau$. Finally, the CausEV method reformulates \@ref(eq:code-length-postulate-simplified) as an interpretable score,
+\begin{equation*}
+S_{X\to Y}^{\text{ext}} = \frac{\hat{S}_{Y^{\text{ext}}} + \hat{S}_{X^{\text{ext}}\mid Y^{\text{ext}}}}{\hat{S}_{X^{\text{ext}}}+ \hat{S}_{Y^{\text{ext}}\mid X^{\text{ext}}} + \hat{S}_{Y^{\text{ext}}} + \hat{S}_{X^{\text{ext}}\mid Y^{\text{ext}}}}.
+\end{equation*}
+If $S_{X\to Y}^{\text{ext}}>0.5$, then \@ref(eq:code-length-postulate-simplified) holds and the conclusion is that extreme events at $X$ cause extreme events at $Y$. A directed graph summarising the underlying causal structure is produced by drawing an edge between nodes $X$ and $Y$ whenever $S_{X\to Y}^{\text{ext}}>0.5$.
+
+## Max-linear Bayesian networks {#causal-inference-max-linear-bayesian-networks}
+
+Graphical models provide a useful framework for analysing and visualising conditional dependencies between random variables. Each node represents a random variable, and the absence of an edge between two nodes connotes conditional independence. Further, *directed* graphical models (also known as Bayesian networks) represent causal links by edge orientation. Existing work on graphical models has primarily focussed on Gaussian random vectors, but the assumption of Gaussianity makes such models ill-suited for extremes. Instead, @gissiblMaxlinearModelsDirected2017 recently developed max-linear Bayesian networks for this purpose. A max-linear Bayesian network is defined by
+\begin{equation}
+X_i = \bigvee_{j\in\mathrm{pa}(i)} c_{ij}X_j\vee Z_i, \quad i\in V,
+(\#eq:max-linear-bayesian-network)
+\end{equation}
+where $c_{ij}\geq 0$ are non-negative edge weights on a directed acyclic graph (DAG) $\mathcal{D}$ with node set $V=\{1,\ldots,n\}$, and $Z_1,\ldots,Z_n$ are independent, continuous, positive random variables. Recalling that $\vee$ denotes $\max$, the model \@ref(eq:max-linear-bayesian-network) says that an extreme event at location $i$ is either the result of an exogenous innovation $Z_i$ or originates (with proportions given by the $c_{ij}$) from the parent nodes of $i$. The use of max-linear Bayesian networks for causal inference in extreme value theory is well-founded mathematically; current work is focussed on developing model fitting techniques and improving performance on noisy data [@gissiblMaxlinearModelsDirected2018; @gissiblIdentifiabilityEstimationRecursive2019]. 
+
+For a more concrete illustration of this approach, we consider the QTree algorithm proposed by @tranCausalDiscoveryRiver2021, which uses max-linear Bayesian networks to tackle the Hidden River Problem, i.e. recovering a river network based on extreme flows only. In this context, $\mathcal{D}$ represents the river network, $X_i$ an extreme discharge at station $i$, the $Z_i$ are external inputs (e.g. rainfall), and the weights $c_{ij}$ measure the flow rate from $j$ to $i$. It is assumed that $\mathcal{D}$ is a root-directed spanning tree $\mathcal{T}$ on $V$, meaning that each node has exactly one child (except the unknown root, which is childless). This assumption is plausible in the context of a river network and guarantees there are no model identifiability issues. 
+
+Suppose we are given a set of observations $\mathcal{X}=\{(\bm{x}_1,\ldots,\bm{x}_M)\}$. Theoretical results derived in the idealised setting where the data are exact, noise-free samples from \@ref(eq:max-linear-bayesian-network) suggest that: $j\to i$ if and only if the empirical distribution of $\{x_{ti}-x_{tj}\}_{t=1}^M$ is concentrated near its minimum; the estimation procedure is more robust to noise if, when considering an edge $j\to i$, we condition on large marginal values of $X_j$. These qualitative aspects of max-linear Bayesian networks motivate the design of the QTree algorithm. First, each potential edge $j\to i$ is assigned a score $d_{ij}$ that measures the dispersion of
+\begin{equation}
+\mathcal{X}_{ij}(q) = \left\lbrace x_{ti}-x_{tj} : t=1,\ldots,M,\, x_j > Q_{\mathcal{X}_j}(q) \right\rbrace
+(\#eq:dispersion-set)
+\end{equation}
+near its minimum, where $Q_{\mathcal{X}_j}(q)$ is the $q$th quantile of $\mathcal{X}$ in the $j$th coordinate. The dispersion measure takes the form
+\begin{equation}
+d_{ij} = \left(Q_{\mathcal{X}_{ij}}(\underset{\bar{}}{r}) - Q_{\mathcal{X}_{ij}}(\bar{r})\right)^2
+(\#eq:dispersion-measure)
+\end{equation}
+where the quantiles $0<\underset{\bar{}}{r}<\bar{r}<1$ are hyperparameters to be selected. The expression \@ref(eq:dispersion-measure) measures the gap between the $\underset{\bar{}}{r}$th and $\bar{r}$th quantiles of the set \@ref(eq:dispersion-set) - it is the square of an interquantile range. Finally, the minimum directed spanning tree $\mathcal{T}$ of the complete bidirected graph $D=(d_{ij})$ is obtained by the Chu-Liu-Edmond algorithm [@tarjanFindingOptimumBranchings1977]. 
+
+## Performance comparison: the Hidden River Problem for the upper Danube basin {#causal-inference-comparison}
+
+The methods of @mhallaCausalMechanismExtreme2020 and @tranCausalDiscoveryRiver2021 were both tested (by their authors) on the Hidden River Problem for the upper basin of the Danube river. The data consists of extreme discharges measured at 31 stations during the summer months (June - August) over a 50 year period. The goal is to recover the river network based on these data. Of course, in this example the true network is known so the methods' performance can be assessed and compared. 
+
+The estimated networks generated by each algorithm can be found in Figure 7 of @mhallaCausalMechanismExtreme2020 and Figure 6 of @tranCausalDiscoveryRiver2021. The QTree algorithm is shown to perform better than the CausEV method for this problem. The QTree estimate only contains six incorrect edges. The majority (four) of these can be viewed as minor errors because the nodes are not connected but are stream-connected, so the edge placement is correct in terms of graph reachability. The CausEV methods places 33 wrong edges in total, of which 30 are stream-connected. Therefore the total number of completely wrong edges is similar in each case, but CausEV has a propensity to place superfluous edges. This tendency is reflected in a variety performance metrics [@tranCausalDiscoveryRiver2021, Table 4.3], which compare unfavourably to those of QTree. 
+
+This does not necessarily prove that max-linear Bayesian networks should be favoured over the information theory method. The QTree algorithm is a special case of the max-linear Bayesian network model designed specifically for the Hidden River Problem. In particular, it assumes that the network is a root-directed spanning tree. This assumption is plausible for a river network (provided the nodes are far apart), but does not hold for general problems. The tailored structure of the QTree network places it at a significant advantage in this test example; further comparisons on a wider set of problems should be conducted. 
+

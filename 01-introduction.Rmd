@@ -1,0 +1,62 @@
+# Introduction {#introduction}
+\chaptermark{Introduction}
+\minitoc
+
+<!--   
+Structure of this chapter:
+  - General introduction to MV extremes
+  - Data write up, France rainfall dataset
+  - Outline of this report
+-->
+
+
+\noindent \todo{General introduction to this report.}
+
+## French precipitation maxima data
+
+The French precipitation maxima dataset consists of the weekly maxima of hourly precipitation at 92 weather stations in France. The measurements are taken during the autumn season (September-November) between 1993 and 2011. The data was collected by Météo-France, the French meteorological service, and is available from the homepage of the second author of @bernardClusteringMaximaSpatial2013 at [https://www.lsce.ipsl.fr/Phocea/Pisp/visu.php?id=109&uid=naveau](https://www.lsce.ipsl.fr/Phocea/Pisp/visu.php?id=109&uid=naveau).
+
+```{r load-france-data, include=FALSE}
+# load the France rainfall dataset
+load(file = "Code/BernardEtAl2013/MaxPrecipFallFrance.RData")
+
+frx <- MaxPrecipFallFrance$precip
+frLong <- MaxPrecipFallFrance$longitudes
+frLat <- MaxPrecipFallFrance$latitudes
+```
+
+The weather stations provide a fairly complete and homogeneous coverage of France, as illustrated in Figure \@ref(fig:fr-data) (left). At each station, we have a time series of length $T=228$. Figure \@ref(fig:fr-data) (right) shows one such the time series, corresponding to the weather station at Château-Gaillard, which is approximately 50km north-east of Lyon and marked in red in Figure \@ref(fig:fr-data) (left). 
+
+```{r fr-data, echo=FALSE, fig.align='center', fig.cap='The locations of the 92 French weather stations, with Château-Gaillard marked in red (left) and the time series of weekly maxima of hourly precipitation recorded at Château-Gaillard (right).', fig.scap='France precipitation maxima data.', out.width="100%"}
+
+par(mfrow=c(1,2), mar=c(5, 4, 4, 2))
+
+# plot a map of all the stations
+neighbors <-  c("France","Spain","Germany","Belgium","Italy","Switzerland","Luxembourg","Netherland","Monaco","Andorra")
+bgOcean <- "white"
+bgFrance <- "grey85"
+map("worldHires", neighbors, col = "grey95", fill = T, bg = bgOcean, xlim = c(-5.0,9.5), ylim = c(41.5,51), mar=c(0, 0, 0, 5))
+map("worldHires", "France", col = bgFrance, fill = T, add = T)
+map.axes(xaxt='n', yaxt='n', ann=FALSE)
+grid()
+points(frLong[-1], frLat[-1], col = "black", pch = 20, cex = 0.8) # plot all stations except Château-Gaillard in black
+points(frLong[1], frLat[1], col = "red", pch = 20, cex = 0.8) # plot Château-Gaillard in red
+
+# plot time series of Château-Gaillard (the first station in the dataset)
+y <- as.numeric(frx[,1])
+tmax <- length(y)
+plot(1:tmax, y, pch = 20, cex = 0.8, xlab = "Index", ylab = "Maximum hourly precipitation (mm)", cex.lab = 0.7, cex.axis = 0.7, mgp=c(1.5,0.5,0))
+```
+
+## Report outline
+
+\todo{Give an outline of how the report is organised}
+\begin{itemize}
+\item Chapter 2 - mathematical background for EV theory
+\item Chapter 3 - clustering
+\item Chapter 4 - Causal inference
+\item Chapter 5 - PCA
+\item Chapter 6 - General conclusions/discussion
+\end{itemize}
+
+
